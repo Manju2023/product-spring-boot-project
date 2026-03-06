@@ -1,0 +1,59 @@
+version: "3.8"
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: productapp-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: Manju@2022
+      MYSQL_DATABASE: productdb12
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    networks:
+      - appbridge
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pManju@2022"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: always
+
+
+  springboot-app:
+    container_name: productapp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SPRING_APPLICATION_NAME: kiransircrudspring
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/productdb12?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: Manju@2022
+    expose:
+      - "8083"
+    networks:
+      - appbridge
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: productapp-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - springboot-app
+    networks:
+      - appbridge
+    restart: always
+
+
+networks:
+  appbridge:
