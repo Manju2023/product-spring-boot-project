@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+
+  springboot-app:
+    container_name: productapp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SPRING_APPLICATION_NAME: kiransircrudspring
+      SPRING_DATASOURCE_URL: jdbc:mysql://database-1.cfykswqiqcrp.ap-south-1.rds.amazonaws.com:3306/productdb12
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: Admin123
+    ports:
+      - "8080:8083"
+    restart: always
