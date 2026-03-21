@@ -1,0 +1,94 @@
+pipeline {
+    agent none
+
+    stages {
+
+        stage('Clone Repository') {
+            agent any
+            steps {
+                git branch: 'main', url: 'git@github.com:Manju2023/product-spring-boot-project.git'
+            }
+        }
+
+        stage('Check & Setup App Server') {
+            agent { label 'app' }
+
+            steps {
+                script {
+
+                    def dockerExists = sh(
+                        script: 'which docker || true',
+                        returnStdout: true
+                    ).trim()
+
+                    if (dockerExists == "") {
+                        echo "Docker not found. Running Ansible setup..."
+
+                        sh '''
+                        ansible-playbook -i inventories/app.ini playbooks/appsetup.yml
+                        '''
+                    } else {
+                        echo "Docker already installed. Skipping Ansible setup."
+                    }
+                }
+            }
+        }
+
+        stage('Deploy App') {
+            agent { label 'app' }
+
+            steps {
+                sh '''
+                docker compose down || true
+                docker compose build
+                docker compose up -d
+                '''
+            }
+        }
+
+        stage('Check & Setup Nginx Server') {
+            agent { label 'nginx' }
+
+            steps {
+                script {
+
+                    def dockerExists = sh(
+                        script: 'which docker || true',
+                        returnStdout: true
+                    ).trim()
+
+                    if (dockerExists == "") {
+                        echo "Docker not found on NGINX. Running Ansible setup..."
+
+                        sh '''
+                        ansible-playbook -i inventories/nginx.ini playbooks/nginxsetup.yml
+                        '''
+                    } else {
+                        echo "Docker already installed on NGINX. Skipping setup."
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Nginx') {
+            agent { label 'nginx' }
+
+            steps {
+                sh '''
+                docker compose down || true
+                docker compose build
+                docker compose up -d
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Deployment Successful 🚀"
+        }
+        failure {
+            echo "Deployment Failed ❌"
+        }
+    }
+}
