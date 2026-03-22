@@ -1,6 +1,6 @@
 ---
 - name: Setup Docker on App Server
-  hosts: app
+  hosts: nginx
   become: yes
 
   tasks:
