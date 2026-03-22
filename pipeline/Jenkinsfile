@@ -3,19 +3,13 @@ pipeline {
 
     stages {
 
-        stage('Clone Repository') {
-            agent any
-            steps {
-                git branch: 'main', url: 'git@github.com:Manju2023/product-spring-boot-project.git'
-            }
-        }
-
         stage('Check & Setup App Server') {
-            agent { label 'app' }
+            agent { label 'built-in' }
 
             steps {
-                script {
+                checkout scm   // ✅ important
 
+                script {
                     def dockerExists = sh(
                         script: 'which docker || true',
                         returnStdout: true
@@ -38,7 +32,10 @@ pipeline {
             agent { label 'app' }
 
             steps {
+                checkout scm   // ✅ required for docker-compose.yml
+
                 sh '''
+                cd app
                 docker compose down || true
                 docker compose build
                 docker compose up -d
@@ -47,11 +44,12 @@ pipeline {
         }
 
         stage('Check & Setup Nginx Server') {
-            agent { label 'nginx' }
+            agent { label 'built-in' }
 
             steps {
-                script {
+                checkout scm   // ✅ important
 
+                script {
                     def dockerExists = sh(
                         script: 'which docker || true',
                         returnStdout: true
@@ -71,10 +69,13 @@ pipeline {
         }
 
         stage('Deploy Nginx') {
-            agent { label 'nginx' }
+            agent { label 'web' }
 
             steps {
+                checkout scm   // ✅ required
+
                 sh '''
+                cd nginx
                 docker compose down || true
                 docker compose build
                 docker compose up -d

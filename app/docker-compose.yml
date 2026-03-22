@@ -1,11 +1,8 @@
-version: "3.8"
-
 services:
-
   springboot-app:
     container_name: productapp
     build:
-      context: .
+      context: ..          # 👈 IMPORTANT (go to root)
       dockerfile: Dockerfile
     environment:
       SPRING_APPLICATION_NAME: kiransircrudspring
